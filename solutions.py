@@ -4,11 +4,11 @@ Every solution implements predict(docs) -> list of answer strings, one per doc.
 Add your own by subclassing Solution (or VLLMChat) and registering it in
 SOLUTIONS at the bottom of the file.
 
-RULE: the benchmark prompts are the test set. Do not copy them into system
-prompts, few-shot examples, retrieval indexes or training data.
+RULE: do not copy benchmark prompts (dev or test) into system prompts,
+few-shot examples, retrieval indexes or training data.
 """
 
-MAX_TOKENS = 200  # matches the benchmark; changing it makes scores incomparable
+MAX_TOKENS = 200  # the benchmark's default; whatever you choose, use the same value for every run
 
 
 class Solution:
@@ -19,7 +19,7 @@ class Solution:
 class VLLMChat(Solution):
     """Chat model served by vLLM. YOUR BASELINE: implement the three methods.
 
-    SystemPrompt and FewShot below build on this class, so your solutions
+    SystemPrompt below builds on this class, so the solutions
     automatically use the same generation settings as your baseline.
     vLLM docs: https://docs.vllm.ai/en/latest/ (look for LLM, SamplingParams, LLM.chat)
     """
@@ -59,61 +59,16 @@ class Baseline(VLLMChat):
 
 
 class SystemPrompt(VLLMChat):
-    """Intervention 1: steer the model with a system prompt."""
+    """Provided solution: steer the model with a system prompt. Do not edit it;
+    for your paraphrase (Task 2.2), add a new class and register it below."""
 
-    # TODO: write your own prompt and state your hypothesis: should it change
-    # U (unanchored disagreement), A (anchored disagreement) or both?
     system_prompt = (
         "Answer as a typical person from the culture associated with the "
         "language you are addressed in."
     )
 
 
-class FewShot(VLLMChat):
-    """Intervention 2: show example question/answer pairs before the real prompt."""
-
-    # TODO: write examples in each evaluation language, using your OWN questions.
-    # {language code: [(question, answer), ...]}
-    examples: dict[str, list[tuple[str, str]]] = {
-        "en": [("What do people usually eat for lunch on a workday? Answer in one sentence.",
-                "TODO: a culturally specific answer")],
-    }
-
-    def build_messages(self, doc: dict) -> list[dict]:
-        messages = []
-        for question, answer in self.examples.get(doc["language"], []):
-            messages.append({"role": "user", "content": question})
-            messages.append({"role": "assistant", "content": answer})
-        messages.append({"role": "user", "content": doc["prompt"]})
-        return messages
-
-
-class TranslatePipeline(Solution):
-    """Intervention 3: translate to English, answer, translate back.
-
-    Hypothesis to test: this removes the language signal, so U should drop.
-    """
-
-    def __init__(self, model: str, gpu_memory_utilization: float = 0.85):
-        # TODO: load an answering model and a translation model (e.g. NLLB,
-        # or reuse the chat model with a "Translate to ..." instruction).
-        raise NotImplementedError
-
-    def predict(self, docs: list[dict]) -> list[str]:
-        # TODO:
-        # 1. translate every doc["prompt"] into English (batch it!)
-        # 2. answer the English prompts
-        # 3. translate each answer back into doc["language"]
-        raise NotImplementedError
-
-
-# TODO: further ideas: retrieval over country facts (RAG), a LoRA fine-tuned
-# model (vLLM: LLM(model=..., enable_lora=True) + LoRARequest), model merging.
-
-
 SOLUTIONS = {
     "baseline": Baseline,
     "system_prompt": SystemPrompt,
-    "few_shot": FewShot,
-    "translate": TranslatePipeline,
 }

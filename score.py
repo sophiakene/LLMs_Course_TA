@@ -107,8 +107,8 @@ def main():
     # TODO (analysis):
     # - Which questions have the highest U? Read those answers in runs/*.jsonl.
     #   Does a human agree they differ culturally?
-    # - Which questions changed most between baseline and your solution, and why?
-    # - Did your solution change U, A, or both? Was that your hypothesis?
+    # - Which questions changed most between the baseline and the provided solution, and why?
+    # - Did the solution change U, A, or both? Was that your prediction?
 
 
 if __name__ == "__main__":
